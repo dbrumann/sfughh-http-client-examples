@@ -1,0 +1,19 @@
+version: '3.7'
+
+services:
+    app:
+        build:
+            context: ./docker/app
+        volumes:
+            - .:/opt/app
+        links:
+            - blackfire
+        environment:
+            BLACKFIRE_CLIENT_ID: ~
+            BLACKFIRE_CLIENT_TOKEN: ~
+
+    blackfire:
+        image: blackfire/blackfire
+        environment:
+            BLACKFIRE_SERVER_ID: ~
+            BLACKFIRE_SERVER_TOKEN: ~
