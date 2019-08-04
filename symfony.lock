@@ -1,4 +1,13 @@
 {
+    "guzzlehttp/guzzle": {
+        "version": "5.3.3"
+    },
+    "guzzlehttp/ringphp": {
+        "version": "1.1.1"
+    },
+    "guzzlehttp/streams": {
+        "version": "3.0.0"
+    },
     "psr/cache": {
         "version": "1.0.1"
     },
@@ -7,6 +16,9 @@
     },
     "psr/log": {
         "version": "1.1.0"
+    },
+    "react/promise": {
+        "version": "v2.7.1"
     },
     "symfony/cache": {
         "version": "v4.3.3"
