@@ -9,6 +9,8 @@ services:
         links:
             - blackfire
         environment:
+            APP_ENV: prod
+            APP_DEBUG: "0"
             BLACKFIRE_CLIENT_ID: ~
             BLACKFIRE_CLIENT_TOKEN: ~
 
