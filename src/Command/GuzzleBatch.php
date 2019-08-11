@@ -33,18 +33,15 @@ final class GuzzleBatch extends Command
 
     protected function execute(InputInterface $input, OutputInterface $output)
     {
-        $requests = [
-            new Request('GET', 'https://reqres.in/api/users/1?delay=1'),
-            new Request('GET', 'https://reqres.in/api/users/2?delay=3'),
-            new Request('GET', 'https://reqres.in/api/users/3?delay=3'),
-            new Request('GET', 'https://reqres.in/api/users/4?delay=5'),
-            new Request('GET', 'https://reqres.in/api/users/5?delay=10'),
-        ];
+        // this command runs requests sequentially and reads them in request order too in 23s
+
+        $delays = [10, 3, 3, 5, 1];
         $responses = [];
 
-        foreach ($requests as $request) {
+        foreach ($delays as $offset => $delay) {
             try {
-                $responses[] = $this->httpClient->send($request);
+                $url = sprintf('https://reqres.in/api/users/%d?delay=%d', $offset +1 , $delay);
+                $responses[$url] = $this->httpClient->send(new Request('GET', $url));
             } catch (GuzzleException $guzzleException) {
                 $output->writeln(sprintf('<error>Request failed: %s</error>', $guzzleException->getMessage()));
 
@@ -52,11 +49,11 @@ final class GuzzleBatch extends Command
             }
         }
 
-        foreach ($responses as $response) {
+        foreach ($responses as $url => $response) {
             $responseBody = $response->getBody()->getContents();
             $data = json_decode($responseBody, true);
 
-            $output->writeln(json_encode($data, JSON_PRETTY_PRINT));
+            $output->writeln(json_encode([$url => $data], JSON_PRETTY_PRINT));
         }
 
         return 0;

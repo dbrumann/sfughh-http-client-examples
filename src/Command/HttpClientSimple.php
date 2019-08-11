@@ -30,15 +30,16 @@ final class HttpClientSimple extends Command
 
     protected function execute(InputInterface $input, OutputInterface $output)
     {
+        $response = $this->httpClient->request('GET', 'https://reqres.in/api/users');
+
         try {
-            $response = $this->httpClient->request('GET', 'https://reqres.in/api/users');
+            $data = $response->toArray();
         } catch (TransportExceptionInterface $transportException) {
             $output->writeln(sprintf('<error>Request failed: %s</error>', $transportException->getMessage()));
 
             return 1;
         }
 
-        $data = $response->toArray();
 
         $output->writeln(json_encode($data, JSON_PRETTY_PRINT));
 

@@ -34,27 +34,27 @@ final class HttpClientBatch extends Command
 
     protected function execute(InputInterface $input, OutputInterface $output)
     {
-        $delays = [1, 3, 3, 5, 10];
+        // this command runs requests concurrently and read them in *request* order in 10s too
+
+        $delays = [10, 3, 3, 5, 1];
         $responses = [];
 
         foreach ($delays as $offset => $delay) {
+            $url = sprintf('https://reqres.in/api/users/%d?delay=%d', $offset + 1, $delay);
+            $responses[] = $this->httpClient->request('GET', $url);
+        }
+
+        /** @var ResponseInterface $response */
+        foreach ($responses as $url => $response) {
             try {
-                $responses[] = $this->httpClient->request(
-                    'GET',
-                    sprintf('https://reqres.in/api/users/%d?delay=%d', $offset + 1, $delay)
-                );
+                $data = $response->toArray();
+
+                $output->writeln(json_encode([$url => $data], JSON_PRETTY_PRINT));
             } catch (TransportExceptionInterface $transportException) {
                 $output->writeln(sprintf('<error>Request failed: %s</error>', $transportException->getMessage()));
 
                 return 1;
             }
-        }
-
-        /** @var ResponseInterface $response */
-        foreach ($responses as $response) {
-            $data = $response->toArray();
-
-            $output->writeln(json_encode($data, JSON_PRETTY_PRINT));
         }
 
         return 0;
