@@ -35,15 +35,24 @@ final class HttpClientAsync extends Command
 
     protected function execute(InputInterface $input, OutputInterface $output)
     {
-        $delays = [1, 3, 3, 5, 10];
+        // this command runs requests concurrently and read them in *network* order in 10s
+
+        $delays = [10, 3, 3, 5, 1];
         $responses = [];
 
         foreach ($delays as $offset => $delay) {
+            $url = sprintf('https://reqres.in/api/users/%d?delay=%d', $offset + 1, $delay);
+            $responses[] = $this->httpClient->request('GET', $url);
+        }
+
+        $stream = $this->httpClient->stream($responses);
+        $jsons = [];
+
+        foreach ($stream as $response => $chunk) {
             try {
-                $responses[] = $this->httpClient->request(
-                    'GET',
-                    sprintf('https://reqres.in/api/users/%d?delay=%d', $offset + 1, $delay)
-                );
+                if ($chunk->isLast()) {
+                    $jsons[$response->getInfo('url')] = $response->toArray();
+                }
             } catch (TransportExceptionInterface $transportException) {
                 $output->writeln(sprintf('<error>Request failed: %s</error>', $transportException->getMessage()));
 
@@ -51,29 +60,8 @@ final class HttpClientAsync extends Command
             }
         }
 
-        $streams = $this->httpClient->stream($responses);
-        $jsons = [];
-
-        foreach ($streams as $stream => $chunk) {
-            $url = $stream->getInfo('url');
-
-            if ($chunk->getError() !== null) {
-                $output->writeln(sprintf('<error>Streaming failed: %s</error>', $chunk->getError()));
-
-                continue;
-            }
-
-            if ($chunk->isFirst()) {
-                $jsons[$url] = $chunk->getContent();
-            } else {
-                $jsons[$url] .= $chunk->getContent();
-            }
-        }
-
-        foreach ($jsons as $json) {
-            $data = json_decode($json, true);
-
-            $output->writeln(json_encode($data, JSON_PRETTY_PRINT));
+        foreach ($jsons as $url => $json) {
+            $output->writeln(json_encode([$url => $json], JSON_PRETTY_PRINT));
         }
 
         return 0;

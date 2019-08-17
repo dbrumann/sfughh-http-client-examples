@@ -34,14 +34,14 @@ final class GuzzleAsync extends Command
 
     protected function execute(InputInterface $input, OutputInterface $output)
     {
-        $delays = [1, 3, 3, 5, 10];
+        // this command runs requests concurrently and reads them in *request* order in 10s
+
+        $delays = [10, 3, 3, 5, 1];
         $promises = [];
 
         foreach ($delays as $offset => $delay) {
-            $promises[] = $this->httpClient->requestAsync(
-                'GET',
-                sprintf('https://reqres.in/api/users/%d?delay=%d', $offset +1 , $delay)
-            );
+            $url = sprintf('https://reqres.in/api/users/%d?delay=%d', $offset + 1 , $delay);
+            $promises[$url] = $this->httpClient->requestAsync('GET', $url);
         }
 
         try {
@@ -52,11 +52,11 @@ final class GuzzleAsync extends Command
             return 1;
         }
 
-        foreach ($responses as $response) {
+        foreach ($responses as $url => $response) {
             $responseBody = $response->getBody()->getContents();
             $data = json_decode($responseBody, true);
 
-            $output->writeln(json_encode($data, JSON_PRETTY_PRINT));
+            $output->writeln(json_encode([$url => $data], JSON_PRETTY_PRINT));
         }
 
         return 0;
